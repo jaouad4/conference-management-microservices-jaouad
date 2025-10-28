@@ -1,0 +1,99 @@
+# Compiled class files
+*.class
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Log files
+*.log
+logs/
+*.pid
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE Files - IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IDE Files - Eclipse
+.settings/
+.classpath
+.project
+.apt_generated
+.factorypath
+
+# IDE Files - VS Code
+.vscode/
+
+# IDE Files - Other
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Angular
+angular-front-app/node_modules/
+angular-front-app/dist/
+angular-front-app/.angular/
+angular-front-app/.tmp/
+angular-front-app/npm-debug.log*
+angular-front-app/yarn-debug.log*
+angular-front-app/yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+
+# H2 Database
+*.db
+*.mv.db
+*.trace.db
+
+# Keycloak
+keycloak-data/
+
+# Config repo
+config-repo/
+
+# Help files
+HELP.md
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/

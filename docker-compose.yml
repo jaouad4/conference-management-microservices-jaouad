@@ -1,0 +1,133 @@
+services:
+  # Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command:
+      - start-dev
+    ports:
+      - "8090:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    networks:
+      - conference-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Eureka Discovery Service
+  discovery-service:
+    build:
+      context: ./discovery-service
+      dockerfile: Dockerfile
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - conference-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Config Service
+  config-service:
+    build:
+      context: ./config-service
+      dockerfile: Dockerfile
+    container_name: config-service
+    ports:
+      - "8888:8888"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+    depends_on:
+      - discovery-service
+    networks:
+      - conference-network
+
+  # Keynote Service
+  keynote-service:
+    build:
+      context: ./keynote-service
+      dockerfile: Dockerfile
+    container_name: keynote-service
+    ports:
+      - "8081:8081"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI=http://localhost:8090/realms/conference-realm
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI=http://host.docker.internal:8090/realms/conference-realm/protocol/openid-connect/certs
+    depends_on:
+      - discovery-service
+      - keycloak
+    networks:
+      - conference-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Conference Service
+  conference-service:
+    build:
+      context: ./conference-service
+      dockerfile: Dockerfile
+    container_name: conference-service
+    ports:
+      - "8082:8082"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI=http://localhost:8090/realms/conference-realm
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI=http://host.docker.internal:8090/realms/conference-realm/protocol/openid-connect/certs
+    depends_on:
+      - discovery-service
+      - keynote-service
+      - keycloak
+    networks:
+      - conference-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Gateway Service
+  gateway-service:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI=http://keycloak:8080/realms/conference-realm
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI=http://keycloak:8080/realms/conference-realm/protocol/openid-connect/certs
+    depends_on:
+      - discovery-service
+      - keynote-service
+      - conference-service
+      - keycloak
+    networks:
+      - conference-network
+
+  # Angular Frontend
+  angular-frontend:
+    build:
+      context: ./angular-front-app
+      dockerfile: Dockerfile
+    container_name: angular-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - gateway-service
+    networks:
+      - conference-network
+
+networks:
+  conference-network:
+    driver: bridge
+
+volumes:
+  keycloak-data:
